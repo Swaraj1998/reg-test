@@ -59,8 +59,10 @@ begin
         ftmt_f2p_debug => ftmt_f2p_debug,
         ftmt_p2f_debug => ftmt_p2f_debug );
 
-    GEN_LUT_6_2 : for N in 0 to NUM_LUTS-1 generate
+    GEN_REG : for N in 0 to NUM_LUTS-1 generate
         attribute DONT_TOUCH of LUT6_2_inst : label is "TRUE";
+        attribute DONT_TOUCH of FDRE_O6_inst : label is "TRUE";
+        attribute DONT_TOUCH of FDRE_O5_inst : label is "TRUE";
     begin
         LUT6_2_inst : LUT6_2
         generic map (
@@ -75,12 +77,7 @@ begin
             --
             O6 => O6_vec(N),
             O5 => O5_vec(N) );
-    end generate GEN_LUT_6_2;
 
-    GEN_FDRE : for N in 0 to NUM_LUTS-1 generate
-        attribute DONT_TOUCH of FDRE_O6_inst : label is "TRUE";
-        attribute DONT_TOUCH of FDRE_O5_inst : label is "TRUE";
-    begin
         FDRE_O6_inst : FDRE
         generic map (
             INIT => '0' )
@@ -100,6 +97,6 @@ begin
             CE => ena,
             R => rst,
             D => O5_vec(N) );
-    end generate GEN_FDRE;
+    end generate GEN_REG;
 
 end architecture RTL;
