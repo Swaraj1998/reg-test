@@ -15,6 +15,8 @@ end entity top;
 
 architecture RTL of top is
 
+    attribute KEEP_HIERARCHY of RTL : architecture is "TRUE";
+
     -- PS7 FTMT Debug Signals
     signal ftmt_f2p_debug : std_logic_vector (31 downto 0);
     signal ftmt_p2f_debug : std_logic_vector (31 downto 0);
@@ -35,20 +37,20 @@ architecture RTL of top is
     constant INIT_VAL : T_INIT_VAL := (
             X"AAAAAAAAAAAAAAAA",
             X"CCCCCCCCCCCCCCCC",
-            X"FF0F0F0F00F0F0F0",
-            X"FFF00FF00F00FF00",
-            X"FFFFF0000FFF0000",
-            X"0000000000000000",
-            X"0000000000000000",
-            X"0000000000000000",
-            X"0000000000000000",
-            X"0000000000000000",
-            X"0000000000000000",
-            X"0000000000000000",
-            X"0000000000000000",
-            X"0000000000000000",
-            X"0000000000000000",
-            X"0000000000000000" );
+            X"F0F0F0F0F0F0F0F0",
+            X"FF00FF00FF00FF00",
+            X"FFFF0000FFFF0000",
+            X"AAAAAAAAAAAAAAAA",
+            X"CCCCCCCCCCCCCCCC",
+            X"F0F0F0F0F0F0F0F0",
+            X"FF00FF00FF00FF00",
+            X"FFFF0000FFFF0000",
+            X"AAAAAAAAAAAAAAAA",
+            X"CCCCCCCCCCCCCCCC",
+            X"F0F0F0F0F0F0F0F0",
+            X"FF00FF00FF00FF00",
+            X"FFFF0000FFFF0000",
+            X"AAAAAAAAAAAAAAAA" );
 
 begin
 
@@ -58,6 +60,7 @@ begin
         ftmt_p2f_debug => ftmt_p2f_debug );
 
     GEN_LUT_6_2 : for N in 0 to NUM_LUTS-1 generate
+        attribute DONT_TOUCH of LUT6_2_inst : label is "TRUE";
     begin
         LUT6_2_inst : LUT6_2
         generic map (
@@ -75,6 +78,8 @@ begin
     end generate GEN_LUT_6_2;
 
     GEN_FDRE : for N in 0 to NUM_LUTS-1 generate
+        attribute DONT_TOUCH of FDRE_O6_inst : label is "TRUE";
+        attribute DONT_TOUCH of FDRE_O5_inst : label is "TRUE";
     begin
         FDRE_O6_inst : FDRE
         generic map (
