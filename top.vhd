@@ -8,16 +8,12 @@ use UNISIM.vcomponents.all;
 use work.vivado_pkg.ALL;
 
 entity top is
+    generic (
+        NUM_LUTS : natural := 16
+    );
 end entity top;
 
 architecture RTL of top is
-    attribute LOC : string;
-    --attribute LOC of LUT5_inst : label is "SLICE_X0Y0";
-    attribute DONT_TOUCH of LUT5_inst : label is "TRUE";
-    attribute MARK_DEBUG of LUT5_inst : label is "TRUE";
-
-    --signal emio_gpio_i : std_logic_vector (63 downto 0);
-    --signal emio_gpio_o : std_logic_vector (63 downto 0);
 
     -- PS7 FTMT Debug Signals
     signal ftmt_f2p_debug : std_logic_vector (31 downto 0);
@@ -25,21 +21,80 @@ architecture RTL of top is
 
     attribute MARK_DEBUG of ftmt_p2f_debug : signal is "TRUE";
 
+    alias clk : std_logic is ftmt_p2f_debug(31); 
+    alias ena : std_logic is ftmt_p2f_debug(30);
+    alias rst : std_logic is ftmt_p2f_debug(29);
+
+    --
+
+    signal O6_vec : std_logic_vector (15 downto 0);
+    signal O5_vec : std_logic_vector (15 downto 0);
+
+    type T_INIT_VAL is array (0 to NUM_LUTS-1)
+        of bit_vector (63 downto 0);
+    constant INIT_VAL : T_INIT_VAL := (
+            X"AAAAAAAAAAAAAAAA",
+            X"CCCCCCCCCCCCCCCC",
+            X"FF0F0F0F00F0F0F0",
+            X"FFF00FF00F00FF00",
+            X"FFFFF0000FFF0000",
+            X"0000000000000000",
+            X"0000000000000000",
+            X"0000000000000000",
+            X"0000000000000000",
+            X"0000000000000000",
+            X"0000000000000000",
+            X"0000000000000000",
+            X"0000000000000000",
+            X"0000000000000000",
+            X"0000000000000000",
+            X"0000000000000000" );
+
 begin
+
     ps7_stub_inst : entity work.ps7_stub
     port map (
         ftmt_f2p_debug => ftmt_f2p_debug,
         ftmt_p2f_debug => ftmt_p2f_debug );
 
-    LUT5_inst : LUT5
-    generic map (
-        INIT => X"80000001" )
-    port map (
-        I0 => ftmt_p2f_debug(0),
-        I1 => ftmt_p2f_debug(1),
-        I2 => ftmt_p2f_debug(2),
-        I3 => ftmt_p2f_debug(3),
-        I4 => ftmt_p2f_debug(4),
-        O => ftmt_f2p_debug(0) );
+    GEN_LUT_6_2 : for N in 0 to NUM_LUTS-1 generate
+    begin
+        LUT6_2_inst : LUT6_2
+        generic map (
+            INIT => INIT_VAL(N) )
+        port map (
+            I0 => ftmt_p2f_debug(0),
+            I1 => ftmt_p2f_debug(1),
+            I2 => ftmt_p2f_debug(2),
+            I3 => ftmt_p2f_debug(3),
+            I4 => ftmt_p2f_debug(4),
+            I5 => ftmt_p2f_debug(5),
+            --
+            O6 => O6_vec(N),
+            O5 => O5_vec(N) );
+    end generate GEN_LUT_6_2;
+
+    GEN_FDRE : for N in 0 to NUM_LUTS-1 generate
+    begin
+        FDRE_O6_inst : FDRE
+        generic map (
+            INIT => '0' )
+        port map (
+            Q => ftmt_f2p_debug(NUM_LUTS + N),
+            C => clk,
+            CE => ena,
+            R => rst,
+            D => O6_vec(N) );
+
+        FDRE_O5_inst : FDRE
+        generic map (
+            INIT => '0' )
+        port map (
+            Q => ftmt_f2p_debug(N),
+            C => clk,
+            CE => ena,
+            R => rst,
+            D => O5_vec(N) );
+    end generate GEN_FDRE;
 
 end architecture RTL;
