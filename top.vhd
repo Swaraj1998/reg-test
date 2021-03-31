@@ -21,36 +21,34 @@ architecture RTL of top is
     signal ftmt_f2p_debug : std_logic_vector (31 downto 0);
     signal ftmt_p2f_debug : std_logic_vector (31 downto 0);
 
+    attribute MARK_DEBUG of ftmt_f2p_debug : signal is "TRUE";
     attribute MARK_DEBUG of ftmt_p2f_debug : signal is "TRUE";
 
-    alias clk : std_logic is ftmt_p2f_debug(31); 
+    alias clk : std_logic is ftmt_p2f_debug(31);
     alias ena : std_logic is ftmt_p2f_debug(30);
     alias rst : std_logic is ftmt_p2f_debug(29);
 
     --
 
-    signal O6_vec : std_logic_vector (15 downto 0);
-    signal O5_vec : std_logic_vector (15 downto 0);
-
     type T_INIT_VAL is array (0 to NUM_LUTS-1)
         of bit_vector (63 downto 0);
     constant INIT_VAL : T_INIT_VAL := (
-            X"AAAAAAAAAAAAAAAA",
-            X"CCCCCCCCCCCCCCCC",
-            X"F0F0F0F0F0F0F0F0",
-            X"FF00FF00FF00FF00",
-            X"FFFF0000FFFF0000",
-            X"AAAAAAAAAAAAAAAA",
-            X"CCCCCCCCCCCCCCCC",
-            X"F0F0F0F0F0F0F0F0",
-            X"FF00FF00FF00FF00",
-            X"FFFF0000FFFF0000",
-            X"AAAAAAAAAAAAAAAA",
-            X"CCCCCCCCCCCCCCCC",
-            X"F0F0F0F0F0F0F0F0",
-            X"FF00FF00FF00FF00",
-            X"FFFF0000FFFF0000",
-            X"AAAAAAAAAAAAAAAA" );
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001",
+            X"0000000000000001" );
 
 begin
 
@@ -63,6 +61,9 @@ begin
         attribute DONT_TOUCH of LUT6_2_inst : label is "TRUE";
         attribute DONT_TOUCH of FDRE_O6_inst : label is "TRUE";
         attribute DONT_TOUCH of FDRE_O5_inst : label is "TRUE";
+        --
+        signal O6 : std_logic;
+        signal O5 : std_logic;
     begin
         LUT6_2_inst : LUT6_2
         generic map (
@@ -75,8 +76,8 @@ begin
             I4 => ftmt_p2f_debug(4),
             I5 => ftmt_p2f_debug(5),
             --
-            O6 => O6_vec(N),
-            O5 => O5_vec(N) );
+            O6 => O6,
+            O5 => O5 );
 
         FDRE_O6_inst : FDRE
         generic map (
@@ -86,7 +87,7 @@ begin
             C => clk,
             CE => ena,
             R => rst,
-            D => O6_vec(N) );
+            D => O6 );
 
         FDRE_O5_inst : FDRE
         generic map (
@@ -96,7 +97,7 @@ begin
             C => clk,
             CE => ena,
             R => rst,
-            D => O5_vec(N) );
+            D => O5 );
     end generate GEN_REG;
 
 end architecture RTL;

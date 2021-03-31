@@ -60,7 +60,7 @@ set_property BITSTREAM.CONFIG.USERID "DEADC0DE" [current_design]
 set_property BITSTREAM.READBACK.ACTIVERECONFIG Yes [current_design]
 
 set_property BITSTREAM.GENERAL.PERFRAMECRC Yes [current_design]
-set_property BITSTREAM.SEU.ESSENTIALBITS Yes [current_design]
+#set_property BITSTREAM.SEU.ESSENTIALBITS Yes [current_design]
 
 write_bitstream -force $ODIR/$OBITNAME.bit
 write_cfgmem -force -format bin -interface SMAPx32 \
