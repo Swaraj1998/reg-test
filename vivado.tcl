@@ -27,7 +27,7 @@ set_property TARGET_LANGUAGE VHDL [current_project]
 
 # STEP#2: run synthesis, write checkpoint design
 
-synth_design -top top -flatten rebuilt    
+synth_design -top top -flatten rebuilt
 write_checkpoint -force $ODIR/post_synth
 
 # STEP#3: run placement and logic optimzation, write checkpoint design
@@ -41,7 +41,7 @@ write_checkpoint -force $ODIR/post_place
 
 # STEP#4: run router, write checkpoint design
 
-route_design 
+route_design
 write_checkpoint -force $ODIR/post_route
 
 report_timing -no_header -path_type summary -max_paths 1000 -slack_lesser_than 0 -setup
@@ -74,5 +74,10 @@ report_utilization -hierarchical -file utilization.rpt
 report_clock_utilization -file utilization.rpt -append
 report_datasheet -file datasheet.rpt
 report_timing_summary -file timing.rpt
+
+for {set i 0} {$i < 16} {incr i} {
+    set bels [get_bels -of [get_cells GEN_REG[$i].LUT*]]
+    puts $bels
+}
 
 puts "all done."
