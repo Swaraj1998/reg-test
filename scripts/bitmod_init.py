@@ -18,6 +18,8 @@ def get_frame_offset_in_file(f, faddr):
             word = f.read(4)
             # Match with the frame address
             if int.from_bytes(word, 'big') == faddr:
+                if f.tell() < (8 + WORDS_PER_FRAME*4 + 4):
+                    continue
                 f.seek(-(8 + WORDS_PER_FRAME*4 + 4), 1)
                 f.read(4)    # FDRI command
                 return f.tell()
@@ -61,6 +63,47 @@ def get_init_value(f, foffset, initoffset, initbits, lutframes):
                 initval |= (bitval << i)
     return initval
 
+def icap_crc(addr, data, crc):
+    val = (addr << 32) | data
+    poly = 0x82F63B78 << 1  # CRC-32C (Castagnoli)
+
+    for i in range(37):
+        if (val & 1) != (crc & 1):
+            crc ^= poly
+
+        crc >>= 1
+        val >>= 1
+
+    return crc
+
+def icap_ecc(idx, data, ecc):
+    off = idx * 32;
+
+    if idx > 0x25:	# avoid 0x800
+        off += 0x1360
+    elif idx > 0x6:	# avoid 0x400
+        off += 0x1340
+    else:		# avoid lower
+        off += 0x1320
+
+    if idx == 0x32:	# mask ECC
+        data &= 0xFFFFE000
+
+    for i in range(32):
+        if (data & 1) == 1:
+            ecc ^= off + i
+        data >>= 1
+
+    if idx == 0x64:	# last index
+        v = ecc & 0xFFF
+        v ^= v >> 8
+        v ^= v >> 4
+        v ^= v >> 2
+        v ^= v >> 1
+        ecc ^= (v & 1) << 12
+
+    return ecc
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
@@ -73,6 +116,8 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--d6lut', help='new init value for D6LUT')
     parser.add_argument('-r', '--report', action='store_true',
             help='show current init values for the slice')
+    parser.add_argument('--nocrc', action='store_true',
+            help='Do not update Per Frame CRC')
     args = parser.parse_args()
 
     with open(DB_JSON) as f:
@@ -90,10 +135,12 @@ if __name__ == '__main__':
         foffset = dict()
         for fr in lutframes:
             faddr = int(sliceinfo['baseaddr'], 16) + fr
+            # print(str(fr) + ': ' + hex(faddr))
             foffset[fr] = get_frame_offset_in_file(f, faddr)
             assert foffset[fr] != -1
 
         initoffset = sliceinfo['offset']
+        # print(foffset)
 
         if args.report:
             print('Slice location: ' + args.slice)
@@ -109,6 +156,30 @@ if __name__ == '__main__':
             initbits = sliceinfo['dlut']['init']
             init = get_init_value(f, foffset, initoffset, initbits, lutframes)
             print('D6LUT INIT: 0x{:016x}'.format(int(init)))
+
+            # for fr in lutframes:
+                # crc = 0
+                # ecc = 0
+                # faddr = int(sliceinfo['baseaddr'], 16) + fr
+                # f.seek(foffset[fr])
+                # for i in range(WORDS_PER_FRAME):
+                    # word = int.from_bytes(f.read(4), 'big')
+                    # crc = icap_crc(0x2, word, crc)
+                    # ecc = icap_crc(i, word, ecc)
+                    # if i == 0x32:
+                        # actual_ecc = word #& 0x1fff
+                # f.read(4)   # FAR command
+                # f.read(4)   # Frame address
+                # f.read(4)   # CRC command
+                # crc = icap_crc(0x1, faddr, crc)
+                # actual_crc = int.from_bytes(f.read(4), 'big')  # CRC value
+                # print('---------------')
+                # print('frame address: ' + hex(faddr))
+                # print('calculated crc: ' + hex(crc))
+                # print('actual crc: ' + hex(actual_crc))
+                # print('calculated ecc: ' + hex(ecc))
+                # print('actual ecc: ' + hex(actual_ecc))
+
             exit(0)
 
         for fr in lutframes:
@@ -132,3 +203,17 @@ if __name__ == '__main__':
                 initval  = int(args.d6lut, 16)
                 bit_val_dict = get_bit_val_dict(fr, initbits, initval)
                 edit_in_frame_init(f, foffset[fr], initoffset, bit_val_dict)
+
+        if not args.nocrc:
+            for fr in lutframes:
+                    crc = 0
+                    faddr = int(sliceinfo['baseaddr'], 16) + fr
+                    f.seek(foffset[fr])
+                    for i in range(WORDS_PER_FRAME):
+                        word = int.from_bytes(f.read(4), 'big')
+                        crc = icap_crc(0x2, word, crc)
+                    f.read(4)   # FAR command
+                    f.read(4)   # Frame address
+                    f.read(4)   # CRC command
+                    crc = icap_crc(0x1, faddr, crc)
+                    f.write(crc.to_bytes(4, 'big'))
