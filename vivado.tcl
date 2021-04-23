@@ -13,6 +13,7 @@ set OBITNAME reg_test
 
 read_vhdl -vhdl2008 ../top.vhd
 read_vhdl -vhdl2008 ../ps7_stub.vhd
+read_vhdl -vhdl2008 ../reg.vhd
 
 read_vhdl -vhdl2008 ../vivado_pkg.vhd
 
@@ -60,6 +61,7 @@ set_property BITSTREAM.CONFIG.USERID "DEADC0DE" [current_design]
 set_property BITSTREAM.READBACK.ACTIVERECONFIG Yes [current_design]
 
 set_property BITSTREAM.GENERAL.PERFRAMECRC Yes [current_design]
+#set_property BITSTREAM.GENERAL.CRC DISABLE [current_design]
 #set_property BITSTREAM.SEU.ESSENTIALBITS Yes [current_design]
 
 write_bitstream -force $ODIR/$OBITNAME.bit
@@ -76,7 +78,7 @@ report_datasheet -file datasheet.rpt
 report_timing_summary -file timing.rpt
 
 for {set i 0} {$i < 16} {incr i} {
-    set bels [get_bels -of [get_cells GEN_REG[$i].LUT*]]
+    set bels [get_bels -of [get_cells reg_inst/GEN_REG[$i].LUT*]]
     puts $bels
 }
 
