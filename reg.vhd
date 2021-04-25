@@ -9,17 +9,18 @@ use work.vivado_pkg.ALL;
 
 entity reg is
     generic (
-        NUM_LUTS : natural := 16;
-        IN_WIDTH : natural := 6;
-        OUT_WIDTH : natural := 32
+        MAX_IN_WIDTH  : natural := 6;
+        MAX_OUT_WIDTH : natural := 32;
+        IN_WIDTH  : natural := MAX_IN_WIDTH;
+        OUT_WIDTH : natural := MAX_OUT_WIDTH
     );
     port (
         clk : in std_logic;
         ena : in std_logic;
         rst : in std_logic;
         --
-        in_vec  : in std_logic_vector (IN_WIDTH-1 downto 0);
-        out_vec : out std_logic_vector (OUT_WIDTH-1 downto 0)
+        in_vec  : in std_logic_vector (MAX_IN_WIDTH-1 downto 0);
+        out_vec : out std_logic_vector (MAX_OUT_WIDTH-1 downto 0)
     );
 end entity reg;
 
@@ -28,25 +29,12 @@ architecture RTL of reg is
     attribute KEEP_HIERARCHY of RTL : architecture is "TRUE";
 
     --
+    constant NUM_LUTS : natural := (OUT_WIDTH+1)/2;
+
     type T_INIT_VAL is array (0 to NUM_LUTS-1)
         of bit_vector (63 downto 0);
-    constant INIT_VAL : T_INIT_VAL := (
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001",
-            X"0000000000000001" );
+    constant INIT_VAL : T_INIT_VAL :=
+        ( others => X"0000000000000001" );
 
     --
     type T_NUM_CHAR is array (0 to 9) of string (1 to 1);

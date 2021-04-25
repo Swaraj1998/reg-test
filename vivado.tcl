@@ -1,7 +1,7 @@
 # vivado.tcl
 #	MicroZed simple build script
 #	Version 1.0
-# 
+#
 # Copyright (C) 2013 H.Poetzl
 
 set ODIR .
@@ -77,9 +77,23 @@ report_clock_utilization -file utilization.rpt -append
 report_datasheet -file datasheet.rpt
 report_timing_summary -file timing.rpt
 
-for {set i 0} {$i < 16} {incr i} {
-    set bels [get_bels -of [get_cells reg_inst/GEN_REG[$i].LUT*]]
-    puts $bels
+####################################
+## Export Register to Slice mappings
+####################################
+
+set fp [open "reg_slice_map.db" w]
+
+set reg_cells [get_cells -filter {REG_NAME!=""}]
+foreach rc $reg_cells {
+    set bels [get_property REG_NAME [get_cells $rc]]
+    append bels " "
+    for {set i 0} {$i < 16} {incr i} {
+        set tmp [get_bels -quiet -of [get_cells -quiet $rc/GEN_REG[$i].LUT6_2_inst]]
+        append bels $tmp " "
+    }
+    puts $fp [string trim $bels]
 }
+
+close $fp
 
 puts "all done."
