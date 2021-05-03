@@ -17,6 +17,7 @@ read_vhdl -vhdl2008 ../reg.vhd
 
 read_vhdl -vhdl2008 ../vivado_pkg.vhd
 
+read_xdc ../reg.xdc
 # read_xdc ../top.xdc
 #read_xdc ../fclk.xdc
 #read_xdc ../pin_i2c.xdc
@@ -34,6 +35,8 @@ write_checkpoint -force $ODIR/post_synth
 # STEP#3: run placement and logic optimzation, write checkpoint design
 
 opt_design -propconst -sweep -retarget -remap
+
+write_checkpoint -force $ODIR/pre_place
 
 place_design
 phys_opt_design -critical_cell_opt -critical_pin_opt -placement_opt -hold_fix -rewire -retime
@@ -78,7 +81,7 @@ report_datasheet -file datasheet.rpt
 report_timing_summary -file timing.rpt
 
 ####################################
-## Export Register to Slice mappings
+## Export register-to-slice mappings
 ####################################
 
 set fp [open "reg_slice_map.db" w]
