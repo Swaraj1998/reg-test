@@ -1,0 +1,3 @@
+[submodule "scripts/xilinx-devcfg"]
+	path = scripts/xilinx-devcfg
+	url = https://github.com/Swaraj1998/xilinx-devcfg
