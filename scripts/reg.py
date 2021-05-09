@@ -78,14 +78,20 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     loc_list = get_reg2loc(args.reg_name)
+    if not loc_list:
+        print("Couldn't find silce locations for register: " + args.reg_name)
+        exit(1)
+
     reg_out_bits = len(loc_list) * 2
 
     # assuming same frames configure all the slices of the register
     addr_list = get_loc2addr(loc_list[0])
-    assert len(addr_list) == 4
+    if not addr_list:
+        print("Couldn't find frame addresses for register: " + args.reg_name)
+        exit(1)
 
     devc_comm = subprocess.run(['python', CFGIF_PATH, 'read',
-            hex(min(addr_list)), str(len(addr_list))])
+            hex(min(addr_list)), str(len(addr_list))], stdout=subprocess.DEVNULL)
     if devc_comm.returncode != 0:
         print('Error @ ' + CFGIF_PATH)
         exit(1)
