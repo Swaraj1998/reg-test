@@ -7,6 +7,7 @@ from reg2addr import *
 CFGIF_PATH = 'xilinx-devcfg/devcfg.py'
 PARBIT_PATH = 'gen_partial_bitstream.py'
 BITMOD_PATH = 'bitmod_init.py'
+BIT2BIN_PATH = 'bit2bin.py'
 
 def read_init_values(bitfile, slc):
     bitmod_comm = subprocess.run(['python', BITMOD_PATH, bitfile, slc, '-r'],
@@ -49,40 +50,79 @@ def get_init(lut, init_list):
         pass
     return init
 
-# def test_print_reg_value(loc_list, reg_index):
-    # reg_out_bits = len(loc_list) * 2
-    # regval = 0
-    # slc_init = dict()
-    # for (i, loc) in enumerate(loc_list):
-        # slc, lut = loc.split('/')
-        # if slc not in slc_init:
-            # slc_init[slc] = read_init_values('devcfg.out.partial', slc)
-        # init_list = slc_init[slc]
-        # init = get_init(lut, init_list)
+def read_reg_value_from_bitfile(loc_list, reg_index):
+    reg_out_bits = len(loc_list) * 2
+    regval = 0
+    slc_init = dict()
+    for (i, loc) in enumerate(loc_list):
+        slc, lut = loc.split('/')
+        if slc not in slc_init:
+            slc_init[slc] = read_init_values('devcfg.out.partial', slc)
+        init_list = slc_init[slc]
+        init = get_init(lut, init_list)
 
-        # o5bit = init & (1 << reg_index)
-        # o6bit = init & (1 << (32 + reg_index))
-        # regval |= (o5bit << i)
-        # regval |= (o6bit << (int(reg_out_bits/2) + i))
-    # print('0x{:08x}'.format(regval))
+        o5bit = 1 if init & (1 << reg_index) else 0
+        o6bit = 1 if init & (1 << (32 + reg_index)) else 0
+        regval |= (o5bit << i)
+        regval |= (o6bit << (int(reg_out_bits/2) + i))
+    return regval
+
+def write_reg_value_to_bitfile(loc_list, reg_index, regval):
+    reg_out_bits = len(loc_list) * 2
+    slc_init = dict()
+    loc_init = dict(dict())
+
+    for (i, loc) in enumerate(loc_list):
+        slc, lut = loc.split('/')
+        if slc not in slc_init:
+            slc_init[slc] = read_init_values('devcfg.out.partial', slc)
+        init_list = slc_init[slc]
+        init = get_init(lut, init_list)
+
+        o5bit = 1 if regval & (1 << i) != 0 else 0
+        o6bit = 1 if regval & (1 << (int(reg_out_bits/2) + i)) != 0 else 0
+
+        if o5bit == 1:
+            init |= (1 << int(reg_index))
+        else:
+            init &= ~(1 << int(reg_index))
+
+        if o6bit == 1:
+            init |= (1 << (32 + int(reg_index)))
+        else:
+            init &= ~(1 << (32 + int(reg_index)))
+
+        if slc not in loc_init:
+            loc_init[slc] = {lut : init}
+        else:
+            loc_init[slc][lut] = init
+
+    for slc in loc_init:
+        write_init_values('devcfg.out.partial', slc, loc_init[slc])
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
-            description='Tool to access custom registers in Zynq FPGA using PDR')
+            description='Tool to access custom registers in Zynq FPGA using Partial Dynamic Reconfiguration')
     parser.add_argument('reg_name', help='register instance name')
     parser.add_argument('reg_index', help='register index [0-31]')
-    parser.add_argument('-w', '--write', help='write value to register')
+    parser.add_argument('-w', '--write', help='write hex value to register')
     parser.add_argument('-r', '--read', action='store_true',
-            help='read value from register')
+            help='read hex value from register')
     args = parser.parse_args()
+
+    if int(args.reg_index) < 0 or int(args.reg_index) > 31:
+        print('Valid register index is in the range [0-31]')
+        exit(1)
+
+    if not args.read and not args.write:
+        print('Please specifiy either read or write option')
+        exit(1)
 
     loc_list = get_reg2loc(args.reg_name)
     if not loc_list:
         print("Couldn't find silce locations for register: " + args.reg_name)
         exit(1)
-
-    reg_out_bits = len(loc_list) * 2
 
     # assuming same frames configure all the slices of the register
     addr_list = get_loc2addr(loc_list[0])
@@ -103,18 +143,17 @@ if __name__ == '__main__':
         exit(1)
 
     if args.read:
-        regval = 0
-        slc_init = dict()
-        for (i, loc) in enumerate(loc_list):
-            slc, lut = loc.split('/')
-            if slc not in slc_init:
-                slc_init[slc] = read_init_values('devcfg.out.partial', slc)
-            init_list = slc_init[slc]
-            init = get_init(lut, init_list)
-
-            o5bit = init & (1 << int(args.reg_index))
-            o6bit = init & (1 << (32 + int(args.reg_index)))
-            regval |= (o5bit << i)
-            regval |= (o6bit << (int(reg_out_bits/2) + i))
+        regval = read_reg_value_from_bitfile(loc_list, int(args.reg_index))
         print('0x{:08x}'.format(regval))
         exit(0)
+
+    if args.write:
+        write_reg_value_to_bitfile(loc_list, int(args.reg_index), int(args.write, 16))
+
+        subprocess.run(['python', BIT2BIN_PATH, 'devcfg.out.partial'])
+
+        devc_comm = subprocess.run(['python', CFGIF_PATH, 'write',
+                'devcfg.out.partial.bin'], stdout=subprocess.DEVNULL)
+        if devc_comm.returncode != 0:
+            print('Error @ ' + CFGIF_PATH)
+            exit(1)
