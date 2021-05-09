@@ -49,21 +49,22 @@ def get_init(lut, init_list):
         pass
     return init
 
-def test_print_reg_value(loc_list, reg_index):
-    regval = 0
-    slc_init = dict()
-    for (i, loc) in enumerate(loc_list):
-        slc, lut = loc.split('/')
-        if slc not in slc_init:
-            slc_init[slc] = read_init_values('devcfg.out.partial', slc)
-        init_list = slc_init[slc]
-        init = get_init(lut, init_list)
+# def test_print_reg_value(loc_list, reg_index):
+    # reg_out_bits = len(loc_list) * 2
+    # regval = 0
+    # slc_init = dict()
+    # for (i, loc) in enumerate(loc_list):
+        # slc, lut = loc.split('/')
+        # if slc not in slc_init:
+            # slc_init[slc] = read_init_values('devcfg.out.partial', slc)
+        # init_list = slc_init[slc]
+        # init = get_init(lut, init_list)
 
-        o5bit = init & (1 << reg_index)
-        o6bit = init & (1 << (32 + reg_index))
-        regval |= (o5bit << i)
-        regval |= (o6bit << (reg_out_bits/2 + i))
-    print('0x{:04%x}'.format(regval))
+        # o5bit = init & (1 << reg_index)
+        # o6bit = init & (1 << (32 + reg_index))
+        # regval |= (o5bit << i)
+        # regval |= (o6bit << (int(reg_out_bits/2) + i))
+    # print('0x{:08x}'.format(regval))
 
 if __name__ == '__main__':
 
@@ -91,7 +92,7 @@ if __name__ == '__main__':
 
     parbit_comm = subprocess.run(['python', PARBIT_PATH, 'devcfg.out'] + \
             [hex(addr) for addr in addr_list])
-    if partbit_comm.returncode != 0:
+    if parbit_comm.returncode != 0:
         print('Error @ ' + PARBIT_PATH)
         exit(1)
 
@@ -105,9 +106,9 @@ if __name__ == '__main__':
             init_list = slc_init[slc]
             init = get_init(lut, init_list)
 
-            o5bit = init & (1 << args.reg_index)
-            o6bit = init & (1 << (32 + args.reg_index))
+            o5bit = init & (1 << int(args.reg_index))
+            o6bit = init & (1 << (32 + int(args.reg_index)))
             regval |= (o5bit << i)
-            regval |= (o6bit << (reg_out_bits/2 + i))
-        print('0x{:04%x}'.format(regval))
+            regval |= (o6bit << (int(reg_out_bits/2) + i))
+        print('0x{:08x}'.format(regval))
         exit(0)
