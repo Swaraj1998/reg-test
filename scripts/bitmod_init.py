@@ -2,7 +2,7 @@ import sys
 import json
 import argparse
 
-DB_JSON = 'slice_lut_db.json'
+DB_JSON = 'slice_lut_db_min.json'
 
 WORDS_PER_FRAME = 101
 FRAME_ADDR_CMD = 0x30002001
