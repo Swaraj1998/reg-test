@@ -1,7 +1,7 @@
 import sys
 import json
 
-DB_JSON = 'slice_lut_db_min.json'
+DB_JSON = '../build/slice_lut_db_min.json'
 
 def get_loc2addr(loc_str):
     slc, lut = loc_str.split('/')

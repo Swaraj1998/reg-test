@@ -3,7 +3,7 @@ import json
 REG_SLICE_DB = '../build/reg_slice_map.db'
 
 MASTER_DB_JSON = 'slice_lut_db.json'
-OUTPUT_JSON = 'slice_lut_db_min.json'
+OUTPUT_JSON = '../build/slice_lut_db_min.json'
 
 if __name__ == "__main__":
 
