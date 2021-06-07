@@ -32,5 +32,5 @@ On the Zynq device (AXIOM Beta):
 - <code>reg.py</code>: Main script to read/write register values from/to a register in the FPGA
 <br><br>
 
-> For more details, please refer to my final project report (submitted to my university for graduation on 15/05/2021) here:<br> https://drive.google.com/file/d/1M6ZfTNf18en3QO0V77vp02iDad84V1jI/view?usp=sharing
+> For more details, please refer to my final project report (submitted to my university for graduation on 15/05/2021) here: https://drive.google.com/file/d/1M6ZfTNf18en3QO0V77vp02iDad84V1jI/view?usp=sharing
 
