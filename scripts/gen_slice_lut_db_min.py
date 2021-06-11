@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+# Copyright (C) 2021 Swaraj Hota
+
 import json
 
 REG_SLICE_DB = '../build/reg_slice_map.db'

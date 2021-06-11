@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+# Copyright (C) 2021 Swaraj Hota
+
 import sys
 import subprocess
 import argparse
@@ -109,6 +113,7 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--write', help='write hex value to register')
     parser.add_argument('-r', '--read', action='store_true',
             help='read hex value from register')
+    #parser.add_argument('-e', '--exec', help='Execute reads/writes from a file')
     args = parser.parse_args()
 
     if int(args.reg_index) < 0 or int(args.reg_index) > 31:
@@ -119,10 +124,14 @@ if __name__ == '__main__':
         print('Please specifiy either read or write option')
         exit(1)
 
+    ## STEP-1: get list of slice locations for the register instance
+
     loc_list = get_reg2loc(args.reg_name)
     if not loc_list:
         print("Couldn't find silce locations for register: " + args.reg_name)
         exit(1)
+
+    ## STEP-2: get list of frame addresses that configure the register
 
     # assuming same frames configure all the slices of the register
     addr_list = get_loc2addr(loc_list[0])
@@ -130,11 +139,15 @@ if __name__ == '__main__':
         print("Couldn't find frame addresses for register: " + args.reg_name)
         exit(1)
 
+    ## STEP-3: read out the frames (assuming in sequence) from the FPGA
+
     devc_comm = subprocess.run(['python', CFGIF_PATH, 'read',
             hex(min(addr_list)), str(len(addr_list))], stdout=subprocess.DEVNULL)
     if devc_comm.returncode != 0:
         print('Error @ ' + CFGIF_PATH)
         exit(1)
+
+    ## STEP-4: create a partial bitstream out of the read out frames
 
     parbit_comm = subprocess.run(['python', PARBIT_PATH, 'devcfg.out'] + \
             [hex(addr) for addr in addr_list])
@@ -142,10 +155,14 @@ if __name__ == '__main__':
         print('Error @ ' + PARBIT_PATH)
         exit(1)
 
+    ## STEP-5: for read, show the value of the specified register and exit
+
     if args.read:
         regval = read_reg_value_from_bitfile(loc_list, int(args.reg_index))
         print('0x{:08x}'.format(regval))
         exit(0)
+
+    ## STEP-6: for write, modify the partial bitfile and write back to the FPGA
 
     if args.write:
         write_reg_value_to_bitfile(loc_list, int(args.reg_index), int(args.write, 16))

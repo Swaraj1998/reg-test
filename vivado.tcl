@@ -3,6 +3,7 @@
 #	Version 1.0
 #
 # Copyright (C) 2013 H.Poetzl
+# Copyright (C) 2021 Swaraj Hota
 
 set ODIR .
 set OBITNAME reg_test

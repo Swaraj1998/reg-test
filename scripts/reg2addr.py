@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+# Copyright (C) 2021 Swaraj Hota
+
 from loc2addr import *
 import sys
 
