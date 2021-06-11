@@ -16,8 +16,8 @@ On the Zynq device (AXIOM Beta):
 <br><code># python devcfg.py write reg_test.bin</code>, which uploads the bitfile <code>reg_test.bin</code> using the PCAP interface
 3. <code>$ mkdir build </code> and copy over <code>build/reg_slice_map.db</code> and <code>build/slice_lut_db_min.json</code> to this build directory from your local machine
 4. <code>$ cd scripts</code> and you can use the main script to read/write register values in the FPGA:
-<br><code># reg.py REG_32_CONST 0 -r</code>, will read the value from the <code>REG_32_CONST</code> named register instance and 0th register index (from [0-31])
-<br><code># reg.py REG_32_CONST 0 -w 0xdeadbeef</code>, will write the value "0xdeadbeef" to the specified register
+<br><code># ./reg.py REG_32_CONST 0 -r</code>, will read the value from the <code>REG_32_CONST</code> named register instance and 0th register index (from [0-31])
+<br><code># ./reg.py REG_32_CONST 0 -w 0xdeadbeef</code>, will write the value "0xdeadbeef" to the specified register
 
 ## Scripts
 
